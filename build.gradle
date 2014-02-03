@@ -1,0 +1,21 @@
+subprojects {
+  configurations {
+    provided
+  }
+  apply plugin: 'java'
+  apply plugin: 'eclipse'
+  apply plugin: 'antlr'
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    provided 'org.projectlombok:lombok:1.12.4'
+  }
+  sourceSets.main.compileClasspath += configurations.provided
+  version = '0.1-SNAPSHOT'
+  eclipse {
+    classpath {
+      plusConfigurations += configurations.provided
+    }
+  }
+}

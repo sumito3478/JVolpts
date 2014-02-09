@@ -10,12 +10,12 @@ dependencies {
     antlr4 group: 'org.antlr', name: artifact, version: antlr4Version
   }
   compile group: 'org.antlr', name: 'antlr4-runtime', version: antlr4Version
+  compile 'com.google.guava:guava:15.0'
 }
 task antlr4(type: JavaExec) {
   main = 'org.antlr.v4.Tool'
   args = [
     'src/main/java/volpts/parser/antlr4/Volpts.g4',
-    'src/main/java/volpts/parser/antlr4/VolptsLexer.g4',
     '-o',
     'build/antlr4-gen',
     '-no-listener',
@@ -26,7 +26,7 @@ compileJava.dependsOn antlr4
 sourceSets {
   main {
     java {
-      srcDir 'build/antlr4-gen'
+      srcDir 'build/antlr4-gen/src/main/java'
     }
   }
 }

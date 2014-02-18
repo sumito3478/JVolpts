@@ -99,19 +99,19 @@ SEMICOLON : ';' ;
 
 // parser rules
 
-compilation_unit : (decl semi!)+ ;
+compilation_unit : (decl semi)+ ;
 
-semi @init { util.promoteNEW_LINE(_input); } : SEMICOLON! | EOF! | NEW_LINE! ;
+semi @init { util.promoteNEW_LINE(_input); } : SEMICOLON | EOF | NEW_LINE ;
 
 type_generic : BACK_QUOTE ID;
 
-type_args : LBRACKET! type (COMMA! type)* RBRACKET! ;
+type_args : LBRACKET type (COMMA type)* RBRACKET ;
 
 type_app : qual_id type_args?;
 
 type_simple : type_generic | type_app ;
 
-type_fun_params : LPAREN! type (COMMA! type)+ RPAREN! ;
+type_fun_params : LPAREN type (COMMA type)+ RPAREN ;
 
 type_fun_multiple : type_fun_params ARROW type;
 
@@ -123,7 +123,7 @@ type : type_fun_multiple | type_fun_single | type_simple ;
 
 type_params : LBRACKET type_generic (COMMA type_generic)* RBRACKET;
 
-type_annot : COLON! type ;
+type_annot : COLON type ;
 
 adt_part : ID OF type semi;
 
@@ -131,17 +131,17 @@ gadt_part : ID COLON type_fun semi;
 
 variant_parts : adt_part+ | gadt_part+ ;
 
-variant : VARIANT^ LCBRACKET! variant_parts RCBRACKET! ;
+variant : VARIANT LCBRACKET variant_parts RCBRACKET ;
 
 record_part : ID COLON type semi;
 
-record : RECORD^ LCBRACKET! record_part+ RCBRACKET! ;
+record : RECORD LCBRACKET record_part+ RCBRACKET ;
 
 type_def : record | variant | type ;
 
-type_decl : TYPE^ ID type_params? EQUAL! type_def;
+type_decl : TYPE ID type_params? EQUAL type_def;
 
-val_decl : VAL? ID type_annot EQUAL! expr ;
+val_decl : VAL? ID type_annot EQUAL expr ;
 
 import_decl : IMPORT qual_id (AS ID)?;
 
@@ -167,7 +167,7 @@ type_expr : type_decl semi expr;
 
 import_expr : import_decl semi expr;
 
-let_expr : LET^ ID type_annot? EQUAL! expr semi! expr;
+let_expr : LET ID type_annot? EQUAL expr semi expr;
 
 let_rec_expr : LET REC ID type_annot? EQUAL expr semi expr;
 
@@ -185,17 +185,17 @@ app_arg : (ID EQUAL)? expr;
 
 app_expr : qual_expr LPAREN app_arg (COMMA app_arg)* RPAREN;
 
-match_guard : IF^ expr ;
+match_guard : IF expr ;
 
-match_part : CASE^ pat match_guard? DOUBLE_ARROW! expr ;
+match_part : CASE pat match_guard? DOUBLE_ARROW expr ;
 
-match_expr : MATCH^ expr LCBRACKET! match_part+ RCBRACKET! ;
+match_expr : MATCH expr LCBRACKET match_part+ RCBRACKET ;
 
 record_expr_part : ID EQUAL expr semi;
 
 record_expr : RECORD LCBRACKET record_expr_part+ RCBRACKET;
 
-if_expr : IF^ LPAREN! expr RPAREN! expr ELSE! expr ;
+if_expr : IF LPAREN expr RPAREN expr ELSE expr ;
 
 compound_expr : LCBRACKET (expr semi)+ RCBRACKET;
 

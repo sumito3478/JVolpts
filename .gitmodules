@@ -1,0 +1,4 @@
+[submodule "third_party/eclipse.jdt.core"]
+	path = third_party/eclipse.jdt.core
+	url = https://github.com/eclipse/eclipse.jdt.core.git
+	branch = BETA_JAVA8

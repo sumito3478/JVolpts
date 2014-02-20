@@ -2,10 +2,6 @@ grammar Volpts;
 
 import VolptsDef;
 
-@header {
-  package volpts.parser.antlr4;
-}
-
 @members {
   ParserUtils util = new ParserUtils();
 }

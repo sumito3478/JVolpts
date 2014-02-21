@@ -48,6 +48,19 @@
         <version>1.8</version>
         <executions>
           <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>third_party/eclipse.jdt.core/org.eclipse.jdt.core/batch</source>
+                <source>third_party/eclipse.jdt.core/org.eclipse.jdt.core/compiler</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
             <phase>generate-sources</phase>
             <goals>
               <goal>add-source</goal>

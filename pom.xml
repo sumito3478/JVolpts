@@ -32,14 +32,19 @@
       <artifactId>guava</artifactId>
       <version>15.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.eclipse.jdt.core.compiler</groupId>
+      <artifactId>ecj</artifactId>
+      <version>4.2.2</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>1.7</source>
+          <target>1.7</target>
         </configuration>
       </plugin>
       <plugin>
@@ -47,19 +52,6 @@
         <artifactId>build-helper-maven-plugin</artifactId>
         <version>1.8</version>
         <executions>
-          <execution>
-            <id>add-source</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
-            <configuration>
-              <sources>
-                <source>third_party/eclipse.jdt.core/org.eclipse.jdt.core/batch</source>
-                <source>third_party/eclipse.jdt.core/org.eclipse.jdt.core/compiler</source>
-              </sources>
-            </configuration>
-          </execution>
           <execution>
             <phase>generate-sources</phase>
             <goals>

@@ -18,7 +18,15 @@ import java.util.Vector;
   ParserUtils util = new ParserUtils();
 }
 
-compilationUnit : expression;
+module returns [ModuleDeclaration v]
+  @init {
+      val declarations = new Vector<Declaration>();
+    }
+  : (declaration { declarations.add($declaration.v); })* {
+      $v = new ModuleDeclaration(declarations);
+    };
+
+declaration returns [Declaration v] : 'def' id '=' expression ';' { $v = new DefDeclaration($id.v, $expression.v); };
 
 type returns [Type v]
   @init {

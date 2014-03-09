@@ -186,6 +186,22 @@ public interface AST {
   public static class RecordType implements Type {
     List<RecordTypePart> parts;
   }
+  public static interface Declaration extends AST {
+  }
+  @Value
+  public static class DefDeclaration implements Declaration {
+	  Identifier name;
+	  Expression expression;
+  }
+  @Value
+  public static class VariantDeclaration implements Declaration {
+	  Identifier name;
+	  List<VariantPart> parts;
+  }
+  @Value
+  public static class ModuleDeclaration implements AST {
+	  List<Declaration> declarations;
+  }
 //  @Value public static class ImportExpression implements Expression {
 //    
 //  }

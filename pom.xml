@@ -161,6 +161,38 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.2</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <artifactSet>
+                <includes>
+                  <include>org.eclipse.jdt.core.compiler:*</include>
+                  <include>org.scala-lang:*</include>
+                </includes>
+              </artifactSet>
+              <minimizeJar>true</minimizeJar>
+              <relocations>
+                <relocation>
+                  <pattern>scala</pattern>
+                  <shadedPattern>volpts.internal.deps.scala</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.eclipse.jdt</pattern>
+                  <shadedPattern>volpts.internal.deps.org.eclipse.jdt</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
     <pluginManagement>
       <plugins>

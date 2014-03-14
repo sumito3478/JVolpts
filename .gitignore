@@ -1,6 +1,7 @@
 # Maven
 /bin
 /target
+/dependency-reduced-pom.xml
 
 # Eclipse
 .classpath

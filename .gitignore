@@ -7,3 +7,7 @@
 .settings
 .project
 
+# idea
+/.idea
+/.idea_modules
+*.iml

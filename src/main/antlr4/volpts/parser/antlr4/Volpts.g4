@@ -2,14 +2,10 @@ grammar Volpts;
 
 @lexer::header {
 import static java.lang.Character.*;
-import lombok.val;
-import volpts.ast.AST;
-import static volpts.ast.AST.*;
+import volpts.ast.*;
 }
 @parser::header {
-import lombok.val;
-import volpts.ast.AST;
-import static volpts.ast.AST.*;
+import volpts.ast.*;
 import java.util.List;
 import java.util.Vector;
 }
@@ -20,24 +16,24 @@ import java.util.Vector;
 
 module returns [ModuleDeclaration v]
   @init {
-      val declarations = new Vector<Declaration>();
+      List<Declaration> declarations = new Vector<Declaration>();
     }
   : nl? (declaration { declarations.add($declaration.v); } semi)* nl? {
-      $v = new ModuleDeclaration(declarations);
+      $v = new ModuleDeclaration(util.seq(declarations));
     };
 
 declaration returns [Declaration v] : 'def' nl? id nl? EQUAL nl? expression{ $v = new DefDeclaration($id.v, $expression.v); };
 
 type returns [Type v]
   @init {
-      val recordParts = new Vector<RecordTypePart>();
+      List<RecordTypePart> recordParts = new Vector<RecordTypePart>();
     }
   : qualId { $v = new IdentifierType($qualId.v); }
   | genId { $v = new GenericType($genId.v); }
   | lhs=type nl? COMMA<assoc=right> nl? rhs=type { $v = new TupleType($lhs.v, $rhs.v); }
   | lhs=type nl? ARROW<assoc=right> nl? rhs=type { $v = new FunctionType($lhs.v, $rhs.v); }
   | LCBRACKET nl? (id nl? COLON nl? ty=type) { recordParts.add(new RecordTypePart($id.v, $ty.v)); } (semi (id nl? COLON nl? ty=type) { recordParts.add(new RecordTypePart($id.v, $ty.v)); } )* semi? RCBRACKET {
-      $v = new RecordType(recordParts);
+      $v = new RecordType(util.seq(recordParts));
     }
   ;
 
@@ -45,13 +41,13 @@ id returns [Identifier v] : ID { $v = new Identifier($ID.text); };
 
 qualId returns [QualifiedIdentifier v]
   @init {
-      val ids = new Vector<Identifier>();
+      List<Identifier> ids = new Vector<Identifier>();
     }
-  : id { ids.add($id.v); } (nl? DOT nl? id { ids.add($id.v); })* { $v = new QualifiedIdentifier(ids); }
+  : id { ids.add($id.v); } (nl? DOT nl? id { ids.add($id.v); })* { $v = new QualifiedIdentifier(util.seq(ids)); }
   ;
 
 genId returns [GenericIdentifier v] : GEN_ID {
-    val text = $GEN_ID.text;
+    String text = $GEN_ID.text;
     $v = new GenericIdentifier(text.substring(1, text.length()));
   };
 
@@ -60,29 +56,29 @@ op2 : opMinus | opPlus;
 
 matchPart returns [MatchPart v]
   @init {
-      val params = new Vector<Identifier>();
+      List<Identifier> params = new Vector<Identifier>();
     }
   : id nl? LPAREN (nl? id { params.add($id.v); })* nl? RPAREN (nl? 'if' nl? cond=expression)? nl? ARROW nl? expression {
-      val c = $cond.ctx == null ? null : $cond.v;
-      $v = new MatchPart($id.v, params, c, $expression.v);
+      Expression c = $cond.ctx == null ? null : $cond.v;
+      $v = new MatchPart($id.v, util.seq(params), util.option(c), $expression.v);
     }
   ;
 
 matchExpression returns [MatchExpression v]
   @init {
-      val parts = new Vector<MatchPart>();
+      List<MatchPart> parts = new Vector<MatchPart>();
     }
   : 'match' nl? expression (nl? 'case' nl? matchPart { parts.add($matchPart.v); })+ {
-      $v = new MatchExpression($expression.v, parts);
+      $v = new MatchExpression($expression.v, util.seq(parts));
     }
   ;
 
 expression returns [Expression v]
   @init {
-      val partials = new Vector<Partial>();
-      val recordParts = new Vector<RecordPart>();
-      val compoundExpressionParts = new Vector<Expression>();
-      val variantParts = new Vector<VariantPart>();
+      // List<Partial> partials = new Vector<Partial>();
+      List<RecordPart> recordParts = new Vector<RecordPart>();
+      List<Expression> compoundExpressionParts = new Vector<Expression>();
+      List<VariantPart> variantParts = new Vector<VariantPart>();
     }
   : LPAREN nl? exp=expression nl? RPAREN { $v = $exp.v; }
   | literal { $v = new LiteralExpression($literal.v); }
@@ -101,17 +97,17 @@ expression returns [Expression v]
   | 'let' nl? id nl? EQUAL nl? lhs=expression semi rhs=expression { $v = new LetExpression($id.v, $lhs.v, $rhs.v); }
   | 'def' nl? id nl? EQUAL nl? lhs=expression semi rhs=expression { $v = new DefExpression($id.v, $lhs.v, $rhs.v); }
   | (id nl? EQUAL nl? exp=expression) { recordParts.add(new RecordPart($id.v, $exp.v)); } (nl? COMMA nl? (id nl? EQUAL nl? exp2=expression) { recordParts.add(new RecordPart($id.v, $exp2.v)); })* {
-      $v = new RecordExpression(recordParts);
+      $v = new RecordExpression(util.seq(recordParts));
     }
   | LCBRACKET nl? exp=expression { compoundExpressionParts.add($exp.v); } (semi exp2=expression { compoundExpressionParts.add($exp2.v); } )* semi? RCBRACKET {
-      $v = new CompoundExpression(compoundExpressionParts);
+      $v = new CompoundExpression(util.seq(compoundExpressionParts));
     }
   | 'inline' nl? id nl? INLINE_BLOCK {
-      val block = $INLINE_BLOCK.text;
+      String block = $INLINE_BLOCK.text;
       $v = new InlineExpression($id.v, block.substring(2, block.length() - 2));
     }
   | 'variant' nl? name=id nl? EQUAL nl? LCBRACKET nl? (id nl? ':' nl? type) { variantParts.add(new VariantPart($id.v, $type.v)); } (semi (id nl? ':' nl? type) { variantParts.add(new VariantPart($id.v, $type.v)); })* semi? RCBRACKET nl? exp=expression {
-      $v = new VariantExpression($name.v, variantParts, $exp.v);
+      $v = new VariantExpression($name.v, util.seq(variantParts), $exp.v);
     }
   | matchExpression { $v = $matchExpression.v; }
   ;
@@ -120,8 +116,8 @@ boolean_literal : 'true' | 'false';
 
 literal returns [Literal<?> v]
   : INTEGER_LITERAL {
-      val text = $INTEGER_LITERAL.text;
-      val c = text.charAt(text.length() - 1);
+      String text = $INTEGER_LITERAL.text;
+      char c = text.charAt(text.length() - 1);
       switch (c) {
       case 'L':
       case 'l':
@@ -133,8 +129,8 @@ literal returns [Literal<?> v]
       }
     }
   | FLOATING_POINT_LITERAL {
-      val text = $FLOATING_POINT_LITERAL.text;
-      val c = text.charAt(text.length() - 1);
+      String text = $FLOATING_POINT_LITERAL.text;
+      char c = text.charAt(text.length() - 1);
       switch (c) {
       case 'F':
       case 'f':
@@ -147,7 +143,7 @@ literal returns [Literal<?> v]
     }
   | boolean_literal { $v = new BooleanLiteral(Boolean.parseBoolean($boolean_literal.text)); }
   | STRING_LITERAL {
-      val text = $STRING_LITERAL.text;
+      String text = $STRING_LITERAL.text;
       $v = new StringLiteral(text.substring(1, text.length() - 1));
     }
   ;

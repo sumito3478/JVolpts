@@ -85,7 +85,7 @@ expression returns [Expression v]
       val variantParts = new Vector<VariantPart>();
     }
   : LPAREN nl? exp=expression nl? RPAREN { $v = $exp.v; }
-  | literal { System.out.println($literal.v); $v = new LiteralExpression($literal.v); }
+  | literal { $v = new LiteralExpression($literal.v); }
   | id { $v = new IdentifierExpression($id.v); }
   | exp=expression nl? DOT nl? id { $v = new DotExpression($exp.v, $id.v); }
   | operator nl? exp=expression { $v = new UnaryExpression(new Operator($operator.text), $exp.v); }

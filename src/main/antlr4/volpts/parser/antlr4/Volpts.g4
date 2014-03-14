@@ -22,11 +22,11 @@ module returns [ModuleDeclaration v]
   @init {
       val declarations = new Vector<Declaration>();
     }
-  : (declaration { declarations.add($declaration.v); })* {
+  : nl? (declaration { declarations.add($declaration.v); } semi)* nl? {
       $v = new ModuleDeclaration(declarations);
     };
 
-declaration returns [Declaration v] : 'def' id '=' expression ';' { $v = new DefDeclaration($id.v, $expression.v); };
+declaration returns [Declaration v] : 'def' nl? id nl? EQUAL nl? expression{ $v = new DefDeclaration($id.v, $expression.v); };
 
 type returns [Type v]
   @init {
@@ -34,9 +34,9 @@ type returns [Type v]
     }
   : qualId { $v = new IdentifierType($qualId.v); }
   | genId { $v = new GenericType($genId.v); }
-  | lhs=type ','<assoc=right> rhs=type { $v = new TupleType($lhs.v, $rhs.v); }
-  | lhs=type '->'<assoc=right> rhs=type { $v = new FunctionType($lhs.v, $rhs.v); }
-  | '{' (id ':' type) { recordParts.add(new RecordTypePart($id.v, $type.v)); } (semi (id ':' type) { recordParts.add(new RecordTypePart($id.v, $type.v)); } )* '}' {
+  | lhs=type nl? COMMA<assoc=right> nl? rhs=type { $v = new TupleType($lhs.v, $rhs.v); }
+  | lhs=type nl? ARROW<assoc=right> nl? rhs=type { $v = new FunctionType($lhs.v, $rhs.v); }
+  | LCBRACKET nl? (id nl? COLON nl? ty=type) { recordParts.add(new RecordTypePart($id.v, $ty.v)); } (semi (id nl? COLON nl? ty=type) { recordParts.add(new RecordTypePart($id.v, $ty.v)); } )* semi? RCBRACKET {
       $v = new RecordType(recordParts);
     }
   ;
@@ -47,7 +47,7 @@ qualId returns [QualifiedIdentifier v]
   @init {
       val ids = new Vector<Identifier>();
     }
-  : id { ids.add($id.v); } ('.' id { ids.add($id.v); })* { $v = new QualifiedIdentifier(ids); }
+  : id { ids.add($id.v); } (nl? DOT nl? id { ids.add($id.v); })* { $v = new QualifiedIdentifier(ids); }
   ;
 
 genId returns [GenericIdentifier v] : GEN_ID {
@@ -62,7 +62,7 @@ matchPart returns [MatchPart v]
   @init {
       val params = new Vector<Identifier>();
     }
-  : id '(' (id { params.add($id.v); })* ')' ('if' cond=expression)? '->' expression {
+  : id nl? LPAREN (nl? id { params.add($id.v); })* nl? RPAREN (nl? 'if' nl? cond=expression)? nl? ARROW nl? expression {
       val c = $cond.ctx == null ? null : $cond.v;
       $v = new MatchPart($id.v, params, c, $expression.v);
     }
@@ -72,7 +72,7 @@ matchExpression returns [MatchExpression v]
   @init {
       val parts = new Vector<MatchPart>();
     }
-  : 'match' expression ('case' matchPart { parts.add($matchPart.v); })+ {
+  : 'match' nl? expression (nl? 'case' nl? matchPart { parts.add($matchPart.v); })+ {
       $v = new MatchExpression($expression.v, parts);
     }
   ;
@@ -84,37 +84,33 @@ expression returns [Expression v]
       val compoundExpressionParts = new Vector<Expression>();
       val variantParts = new Vector<VariantPart>();
     }
-  : '(' expression ')' { $v = $expression.v; }
-  | literal { $v = new LiteralExpression($literal.v); }
+  : LPAREN nl? exp=expression nl? RPAREN { $v = $exp.v; }
+  | literal { System.out.println($literal.v); $v = new LiteralExpression($literal.v); }
   | id { $v = new IdentifierExpression($id.v); }
-  | expression '.' id { $v = new DotExpression($expression.v, $id.v); }
-  | operator expression { $v = new UnaryExpression(new Operator($operator.text), $expression.v); }
-  | lhs=expression '(' rhs=expression ')' { $v = new ApplicationExpression($lhs.v, $rhs.v); }
-  | lhs=expression op1 rhs=expression { $v = new OperatorExpression($lhs.v, new Operator($op1.text), $rhs.v); }
-  | lhs=expression op2 rhs=expression { $v = new OperatorExpression($lhs.v, new Operator($op2.text), $rhs.v); }
-  | lhs=expression op3=opColon<assoc=right> rhs=expression { $v = new OperatorExpression($lhs.v, new Operator($op3.text), $rhs.v); }
-  | lhs=expression op4=operator rhs=expression { $v = new OperatorExpression($lhs.v, new Operator($op4.text), $rhs.v); }
-  | lhs=expression op5=','<assoc=right> rhs=expression { $v = new OperatorExpression($lhs.v, new Operator(","), $rhs.v); }
-  | 'if' '(' cond=expression ')' lhs=expression 'else' rhs=expression { $v = new IfExpression($cond.v, $lhs.v, $rhs.v); }
-  | 'fun' id '->' expression { $v = new LambdaExpression($id.v, $expression.v); }
-  // 'partial' partial { $v = new PartialExpression($partial.v); }
-  // expression 'match' partialList { $v = new MatchExpression($expression.v, $partialList.v); }
-  | 'let' 'rec' id '=' lhs=expression semi? rhs=expression { $v = new LetRecExpression($id.v, $lhs.v, $rhs.v); }
-  | 'let' id '=' lhs=expression semi? rhs=expression { $v = new LetExpression($id.v, $lhs.v, $rhs.v); }
-  //| 'def' 'rec' id '=' lhs=expression semi? rhs=expression { $v = new ValRecExpression($id.v, $lhs.v, $rhs.v); }
-  | 'def' id '=' lhs=expression semi? rhs=expression { $v = new DefExpression($id.v, $lhs.v, $rhs.v); }
-  | (id '=' expression) { recordParts.add(new RecordPart($id.v, $expression.v)); } (',' (id '=' expression) { recordParts.add(new RecordPart($id.v, $expression.v)); })* {
+  | exp=expression nl? DOT nl? id { $v = new DotExpression($exp.v, $id.v); }
+  | operator nl? exp=expression { $v = new UnaryExpression(new Operator($operator.text), $exp.v); }
+  | lhs=expression nl? LPAREN nl? rhs=expression nl? RPAREN { $v = new ApplicationExpression($lhs.v, $rhs.v); }
+  | lhs=expression nl? op1 nl? rhs=expression { $v = new OperatorExpression($lhs.v, new Operator($op1.text), $rhs.v); }
+  | lhs=expression nl? op2 nl? rhs=expression { $v = new OperatorExpression($lhs.v, new Operator($op2.text), $rhs.v); }
+  | lhs=expression nl? op3=opColon<assoc=right> nl? rhs=expression { $v = new OperatorExpression($lhs.v, new Operator($op3.text), $rhs.v); }
+  | lhs=expression nl? op4=operator nl? rhs=expression { $v = new OperatorExpression($lhs.v, new Operator($op4.text), $rhs.v); }
+  | lhs=expression nl? op5=COMMA<assoc=right> nl? rhs=expression { $v = new OperatorExpression($lhs.v, new Operator(","), $rhs.v); }
+  | 'if' nl? LPAREN nl? cond=expression nl? RPAREN nl? lhs=expression nl? 'else' nl? rhs=expression { $v = new IfExpression($cond.v, $lhs.v, $rhs.v); }
+  | 'fun' nl? id nl? ARROW nl? exp=expression { $v = new LambdaExpression($id.v, $exp.v); }
+  | 'let' nl? 'rec' nl? id nl? EQUAL nl? lhs=expression semi rhs=expression { $v = new LetRecExpression($id.v, $lhs.v, $rhs.v); }
+  | 'let' nl? id nl? EQUAL nl? lhs=expression semi rhs=expression { $v = new LetExpression($id.v, $lhs.v, $rhs.v); }
+  | 'def' nl? id nl? EQUAL nl? lhs=expression semi rhs=expression { $v = new DefExpression($id.v, $lhs.v, $rhs.v); }
+  | (id nl? EQUAL nl? exp=expression) { recordParts.add(new RecordPart($id.v, $exp.v)); } (nl? COMMA nl? (id nl? EQUAL nl? exp2=expression) { recordParts.add(new RecordPart($id.v, $exp2.v)); })* {
       $v = new RecordExpression(recordParts);
     }
-  | '{' expression { compoundExpressionParts.add($expression.v); } (semi expression { compoundExpressionParts.add($expression.v); } )* '}' {
+  | LCBRACKET nl? exp=expression { compoundExpressionParts.add($exp.v); } (semi exp2=expression { compoundExpressionParts.add($exp2.v); } )* semi? RCBRACKET {
       $v = new CompoundExpression(compoundExpressionParts);
     }
-  //| 'import' id ('.' id)* ('.' '_')? semi expression
-  | 'inline' id INLINE_BLOCK {
+  | 'inline' nl? id nl? INLINE_BLOCK {
       val block = $INLINE_BLOCK.text;
       $v = new InlineExpression($id.v, block.substring(2, block.length() - 2));
     }
-  | 'variant' name=id '=' '{' (id ':' type) { variantParts.add(new VariantPart($id.v, $type.v)); } (semi (id ':' type) { variantParts.add(new VariantPart($id.v, $type.v)); })* semi? '}' exp=expression {
+  | 'variant' nl? name=id nl? EQUAL nl? LCBRACKET nl? (id nl? ':' nl? type) { variantParts.add(new VariantPart($id.v, $type.v)); } (semi (id nl? ':' nl? type) { variantParts.add(new VariantPart($id.v, $type.v)); })* semi? RCBRACKET nl? exp=expression {
       $v = new VariantExpression($name.v, variantParts, $exp.v);
     }
   | matchExpression { $v = $matchExpression.v; }
@@ -172,7 +168,21 @@ opOther : OP_OTHER;
 
 operator : OP_PLUS | OP_MINUS | OP_TIMES | OP_DIV | OP_PERCENT | OP_OTHER;
 
-semi @init { util.promoteNEW_LINE(_input); } : SEMICOLON | EOF | NEW_LINE ;
+semi : (NEW_LINE* SEMICOLON NEW_LINE*) | (NEW_LINE* EOF) | NEW_LINE+ ;
+
+// Symbols that cannot be operator
+
+LPAREN : '(';
+RPAREN : ')';
+EQUAL : '=';
+LCBRACKET : '{';
+RCBRACKET : '}';
+COMMA : ',';
+ARROW : '->';
+DOT : '.';
+LBRACKET : '[';
+RBRACKET : ']';
+COLON : ':';
 
 // operators
 
@@ -185,9 +195,9 @@ fragment OpChar : '%' | '!' | '#' | '%' | '&' | '*' | '/' | '?' | '@' | '^' | '|
 
 fragment OpSuffix : '_' IdentifierPart*;
 
-OP_ALLOW : '->'; // reserved
+OP_ALLOW : ARROW; // reserved
 
-OP_SINGLE_COLON : ':'; // reserved
+OP_SINGLE_COLON : COLON; // reserved
 
 OP_PLUS : '+' OpChar* OpSuffix?;
 
@@ -203,33 +213,23 @@ OP_COLON : ':' OpChar* OpSuffix?;
 
 OP_OTHER : OpChar+ OpSuffix?;
 
-// expressions
-
-
-// declarations
-
-// declaration
-//   : 'val' ID type_annotation '=' expression
-//   | 'operator' ID ID ID? type_annotation '=' expression
-//   | 'type' ID ID* '=' type
-//   | 'variant' ID '=' record_type
-//   | 'import' ID ('.' ID)* ('.' '_')? semi declarations
-//   | 'inline' ID INLINE_BLOCK
-//   ;
-// 
-// declarations : declaration (semi declaration)*;
-
-// lexical rules
-
 fragment NewLineChar : '\u000D' | '\u000A' | '\u0085' | '\u2028' | '\u2029';
 
-SINGLE_LINE_COMMENT : ('//' ~ [\u000D''\u000A''\u0085''\u2028''\u2029']*) -> channel(HIDDEN);
+fragment SingleLineComment : '//' ~ [\u000D''\u000A''\u0085''\u2028''\u2029']*;
+
+SINGLE_LINE_COMMENT : SingleLineComment -> channel(HIDDEN);
+
+fragment MultiLineComment : '/*' .*? '*/' ;
 
 fragment Space : '\u0009' | '\u000B' | '\u000C' | '\u0020' | '\u1680' | '\u180E' | '\u2000'..'\u200A' | '\u202F' | '\u205F' | '\u3000';
 
 SPACE : Space+ -> channel(HIDDEN);
 
-NEW_LINE : ('\u000D' | '\u000A' | '\u000D' '\u000A' | '\u0085' | '\u2028' | '\u2029') -> channel(HIDDEN);
+fragment NewLine : ('\u000D' | '\u000A' | '\u000D' '\u000A' | '\u0085' | '\u2028' | '\u2029')+;
+
+NEW_LINE : NewLine+;
+
+nl : NEW_LINE+;
 
 // keywords
 LET : 'let' ;
@@ -271,24 +271,6 @@ ID : IdentifierStart IdentifierPart* ;
 
 GEN_ID : '\'' IdentifierStart IdentifierPart*;
 
-LPAREN : '(' ;
-RPAREN : ')' ;
-EQUAL : '=' ;
-MINUS : '-' ;
-LCBRACKET : '{' ;
-RCBRACKET : '}' ;
-COMMA : ',' ;
-DOUBLE_ARROW : '=>' ;
-//ARROW : '->' ;
-DOT : '.' ;
-//COLON : ':' ;
-LBRACKET : '[';
-RBRACKET : ']';
-LESS_THAN : '<' ;
-GREATER_THAN : '>' ;
-OR : '|' ;
-BACK_QUOTE : '`' ;
-
 fragment DecimalNumeral : '0' | ('1' .. '9') ('0' .. '9')* ;
 
 fragment HexNumeral : '0x' ('0' .. '9' | 'a' .. 'f' | 'A' .. 'F')+ ;
@@ -306,8 +288,8 @@ fragment ExponentPart : ('E' | 'e') ('+' | '-')? Digit+ ;
 fragment FloatType : 'F' | 'f' | 'D' | 'd' ;
 
 FLOATING_POINT_LITERAL :
-  Digit+ '.' Digit* ExponentPart? FloatType?
-  | '.' Digit+ ExponentPart? FloatType?
+  Digit+ DOT Digit* ExponentPart? FloatType?
+  | DOT Digit+ ExponentPart? FloatType?
   | Digit+ ExponentPart
   | Digit+ FloatType
   | Digit+ ExponentPart FloatType

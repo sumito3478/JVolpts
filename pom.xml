@@ -46,7 +46,6 @@
     </dependency>
   </dependencies>
   <build>
-    <testSourceDirectory>src/test/scala</testSourceDirectory>
     <plugins>
       <plugin>
         <!-- disable the default javac compilation and use scalac instead. -->

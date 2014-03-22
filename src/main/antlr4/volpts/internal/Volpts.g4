@@ -2,10 +2,8 @@ grammar Volpts;
 
 @lexer::header {
 import static java.lang.Character.*;
-import volpts.ast.*;
 }
 @parser::header {
-import volpts.ast.*;
 import java.util.List;
 import java.util.Vector;
 }

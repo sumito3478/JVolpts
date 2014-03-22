@@ -1,6 +1,5 @@
 package volpts
-package parser
-package antlr4
+package internal
 
 import scala.collection._
 

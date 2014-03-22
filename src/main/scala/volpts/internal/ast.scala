@@ -1,5 +1,5 @@
 package volpts
-package ast
+package internal
 
 sealed trait Node
 case class Identifier(name: String) extends Node

@@ -9,6 +9,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <antlr4.version>4.2</antlr4.version>
+    <scalatest.suffixes>Spec,Test</scalatest.suffixes>
   </properties>
   <dependencies>
     <dependency>
@@ -135,6 +136,7 @@
         <configuration>
           <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
           <junitxml>.</junitxml>
+          <suffixes>${scalatest.suffixes}</suffixes>
         </configuration>
         <executions>
           <execution>

@@ -9,7 +9,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <antlr4.version>4.2</antlr4.version>
-    <scalatest.suffixes>Spec,Test</scalatest.suffixes>
+    <scalatest.suffixes>Spec|Test</scalatest.suffixes>
   </properties>
   <dependencies>
     <dependency>
